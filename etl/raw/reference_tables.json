@@ -1,0 +1,216 @@
+{
+  "room_type_lookup": [
+    {
+      "space_type": "KS",
+      "room_class": "Standard",
+      "display_name": "Standard King",
+      "number_of_rooms": 52
+    },
+    {
+      "space_type": "TB",
+      "room_class": "Standard",
+      "display_name": "Standard Twin",
+      "number_of_rooms": 20
+    },
+    {
+      "space_type": "EX",
+      "room_class": "Executive",
+      "display_name": "Executive King",
+      "number_of_rooms": 26
+    }
+  ],
+  "market_code_lookup": [
+    {
+      "market_code": "OTA",
+      "market_name": "Online Travel Agency",
+      "macro_group": "Retail",
+      "description": "Third-party online channels such as Booking.com and Expedia."
+    },
+    {
+      "market_code": "BAR",
+      "market_name": "Best Available Retail",
+      "macro_group": "Retail",
+      "description": "Direct flexible retail business."
+    },
+    {
+      "market_code": "PROM",
+      "market_name": "Promotional Retail",
+      "macro_group": "Retail",
+      "description": "Direct promotional and member-rate retail bookings."
+    },
+    {
+      "market_code": "FIT",
+      "market_name": "Free Independent Traveller",
+      "macro_group": "Leisure",
+      "description": "Independent leisure demand, often direct or contracted."
+    },
+    {
+      "market_code": "CSR",
+      "market_name": "Corporate Negotiated",
+      "macro_group": "Corporate",
+      "description": "Negotiated corporate transient business."
+    },
+    {
+      "market_code": "CNR",
+      "market_name": "Corporate Room Nights",
+      "macro_group": "Corporate",
+      "description": "Corporate transient business via agency or negotiated accounts."
+    },
+    {
+      "market_code": "CNI",
+      "market_name": "Conference / Incentive Group",
+      "macro_group": "MICE",
+      "description": "Group business tied to conferences or incentives."
+    },
+    {
+      "market_code": "CGR",
+      "market_name": "Corporate Group",
+      "macro_group": "MICE",
+      "description": "Corporate group blocks and meetings business."
+    },
+    {
+      "market_code": "EVEN",
+      "market_name": "Event Demand",
+      "macro_group": "MICE",
+      "description": "Demand associated with citywide or hotel-linked events."
+    },
+    {
+      "market_code": "SMERF",
+      "market_name": "SMERF Group",
+      "macro_group": "Leisure Group",
+      "description": "Social, military, educational, religious, fraternal groups."
+    }
+  ],
+  "channel_code_lookup": [
+    {
+      "channel_code": "WEB",
+      "channel_name": "Web / OTA Web",
+      "channel_group": "Digital"
+    },
+    {
+      "channel_code": "REC",
+      "channel_name": "Direct Reservations / Brand Web",
+      "channel_group": "Direct"
+    },
+    {
+      "channel_code": "EMA",
+      "channel_name": "Email / Central Reservations",
+      "channel_group": "Offline"
+    },
+    {
+      "channel_code": "WAL",
+      "channel_name": "Walk-in",
+      "channel_group": "Offline"
+    }
+  ],
+  "rate_plan_lookup": [
+    {
+      "rate_plan_code": "BOOKBAR",
+      "plan_family": "Retail",
+      "is_commissionable": true
+    },
+    {
+      "rate_plan_code": "GROUPBB",
+      "plan_family": "Group",
+      "is_commissionable": false
+    },
+    {
+      "rate_plan_code": "DLY1",
+      "plan_family": "Retail",
+      "is_commissionable": false
+    },
+    {
+      "rate_plan_code": "FITBB",
+      "plan_family": "Retail",
+      "is_commissionable": true
+    },
+    {
+      "rate_plan_code": "CORP10BB",
+      "plan_family": "Corporate",
+      "is_commissionable": false
+    },
+    {
+      "rate_plan_code": "PROMO1",
+      "plan_family": "Retail",
+      "is_commissionable": true
+    },
+    {
+      "rate_plan_code": "ZEPHYR-CORP-25",
+      "plan_family": "Corporate",
+      "is_commissionable": false
+    },
+    {
+      "rate_plan_code": "WALKIN",
+      "plan_family": "Retail",
+      "is_commissionable": false
+    }
+  ],
+  "market_macro_group_history": [
+    {
+      "market_code": "OTA",
+      "valid_from": "2020-01-01",
+      "valid_to": null,
+      "macro_group": "Retail"
+    },
+    {
+      "market_code": "BAR",
+      "valid_from": "2020-01-01",
+      "valid_to": null,
+      "macro_group": "Retail"
+    },
+    {
+      "market_code": "PROM",
+      "valid_from": "2020-01-01",
+      "valid_to": "2025-06-01",
+      "macro_group": "Retail"
+    },
+    {
+      "market_code": "PROM",
+      "valid_from": "2025-06-01",
+      "valid_to": null,
+      "macro_group": "Leisure Group"
+    },
+    {
+      "market_code": "FIT",
+      "valid_from": "2020-01-01",
+      "valid_to": null,
+      "macro_group": "Leisure"
+    },
+    {
+      "market_code": "CSR",
+      "valid_from": "2020-01-01",
+      "valid_to": null,
+      "macro_group": "Corporate"
+    },
+    {
+      "market_code": "CNR",
+      "valid_from": "2020-01-01",
+      "valid_to": null,
+      "macro_group": "Corporate"
+    },
+    {
+      "market_code": "CNI",
+      "valid_from": "2020-01-01",
+      "valid_to": null,
+      "macro_group": "MICE"
+    },
+    {
+      "market_code": "CGR",
+      "valid_from": "2020-01-01",
+      "valid_to": null,
+      "macro_group": "MICE"
+    },
+    {
+      "market_code": "EVEN",
+      "valid_from": "2020-01-01",
+      "valid_to": null,
+      "macro_group": "MICE"
+    },
+    {
+      "market_code": "SMERF",
+      "valid_from": "2020-01-01",
+      "valid_to": null,
+      "macro_group": "Leisure Group"
+    }
+  ]
+}
