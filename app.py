@@ -143,6 +143,8 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+
 @st.cache_resource
 def build_agent():
     config = build_agent_config()
@@ -162,7 +164,26 @@ def build_agent():
     return agent
 
 
-def run_agent(question: str) -> str:
+def extract_tool_trace(result: dict) -> list[str]:
+    trace = []
+
+    for msg in result.get("messages", []):
+        tool_calls = getattr(msg, "tool_calls", None)
+
+        if tool_calls:
+            for call in tool_calls:
+                trace.append(f"Tool called: {call.get('name')} args={call.get('args')}")
+
+        msg_type = getattr(msg, "type", "")
+        name = getattr(msg, "name", None)
+
+        if msg_type == "tool":
+            trace.append(f"Tool result from: {name}")
+
+    return trace
+
+
+def run_agent(question: str) -> tuple[str, list[str]]:
     result = st.session_state.agent.invoke(
         {"messages": [HumanMessage(content=question)]},
         config={
@@ -172,7 +193,19 @@ def run_agent(question: str) -> str:
         },
     )
 
-    return get_message_content(result["messages"][-1])
+    answer = get_message_content(result["messages"][-1])
+    trace = extract_tool_trace(result)
+
+    return answer, trace
+
+
+def render_answer_with_trace(answer: str, trace: list[str]) -> None:
+    st.markdown(answer)
+
+    if trace:
+        with st.expander("Tool trace"):
+            for item in trace:
+                st.code(item)
 
 
 if "thread_id" not in st.session_state:
@@ -212,6 +245,7 @@ with st.expander("Try these demo questions", expanded=True):
 
     for index, question in enumerate(demo_questions):
         target_col = col1 if index % 2 == 0 else col2
+
         with target_col:
             if st.button(question, key=f"demo-{index}", use_container_width=True):
                 st.session_state.next_question = question
@@ -224,7 +258,10 @@ if st.button("New conversation"):
 
 
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
+    with st.chat_message(
+        message["role"],
+        avatar=message.get("avatar", "assistant"),
+    ):
         st.markdown(message["content"])
 
 
@@ -235,17 +272,21 @@ if question:
     if needs_as_of_approval(question):
         st.session_state.pending_approval_question = question
     else:
-        st.session_state.messages.append({"role": "user", "content": question})
+        st.session_state.messages.append(
+            {"role": "user", "content": question, "avatar": "user"}
+        )
 
-        with st.chat_message("user"):
+        with st.chat_message("user", avatar="user"):
             st.markdown(question)
 
-        with st.chat_message("assistant"):
+        with st.chat_message("assistant", avatar="assistant"):
             with st.spinner("Checking revenue tools..."):
-                answer = run_agent(question)
-                st.markdown(answer)
+                answer, trace = run_agent(question)
+                render_answer_with_trace(answer, trace)
 
-        st.session_state.messages.append({"role": "assistant", "content": answer})
+        st.session_state.messages.append(
+            {"role": "assistant", "content": answer, "avatar": "assistant"}
+        )
 
 
 if st.session_state.pending_approval_question:
@@ -258,17 +299,22 @@ if st.session_state.pending_approval_question:
 
     with approve_col:
         if st.button("Approve and run", use_container_width=True):
-            st.session_state.messages.append({"role": "user", "content": question})
+            st.session_state.messages.append(
+                {"role": "user", "content": question, "avatar": "user"}
+            )
 
-            with st.chat_message("user"):
+            with st.chat_message("user", avatar="user"):
                 st.markdown(question)
 
-            with st.chat_message("assistant"):
+            with st.chat_message("assistant", avatar="assistant"):
                 with st.spinner("Checking as-of OTB..."):
-                    answer = run_agent(question)
-                    st.markdown(answer)
+                    answer, trace = run_agent(question)
+                    render_answer_with_trace(answer, trace)
 
-            st.session_state.messages.append({"role": "assistant", "content": answer})
+            st.session_state.messages.append(
+                {"role": "assistant", "content": answer, "avatar": "assistant"}
+            )
+
             st.session_state.pending_approval_question = None
             st.rerun()
 
