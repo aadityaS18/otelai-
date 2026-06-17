@@ -29,3 +29,11 @@ No paid OpenAI API is required for local development.
 
 ```bash
 python scripts/langgraph_agent_cli.py
+
+
+## UI Demo
+
+Run:
+
+```bash
+streamlit run app.py

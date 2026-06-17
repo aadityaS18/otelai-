@@ -63,7 +63,7 @@ def main():
     config = build_agent_config()
 
     llm = ChatOllama(
-        model="llama3.1:8b",
+        model="qwen2.5:3b",
         temperature=0,
     )
 
