@@ -17,3 +17,10 @@ python-dotenv==1.2.2
 six==1.17.0
 soupsieve==2.8.4
 typing_extensions==4.15.0
+fastapi==0.95.2
+uvicorn==0.49.0
+streamlit
+langgraph
+langchain-core
+langchain-ollama
+langchain-groq
