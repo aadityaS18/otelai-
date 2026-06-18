@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "generated_at": "2026-06-15T08:47:33.581451+00:00",
-  "command": "scripts/compute_load_fingerprint.py --database-url postgresql://hackathon:hackathon@localhost:5432/hotel_hackathon --manifest etl/SCRAPE_MANIFEST.json --output etl/LOAD_PROOF.json",
-  "database_url_redacted": "postgresql://***:***@localhost:5432/hotel_hackathon",
+  "generated_at": "2026-06-18T10:11:41.541923+00:00",
+  "command": "scripts/compute_load_fingerprint.py --database-url postgresql://neondb_owner:npg_iU3M6JjwyAfo@ep-lively-meadow-at9b0psu-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require --manifest etl/SCRAPE_MANIFEST.json --output etl/LOAD_PROOF.json",
+  "database_url_redacted": "postgresql://***:***@ep-lively-meadow-at9b0psu-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
   "row_counts": {
     "reservations_hackathon": 516,
     "room_type_lookup": 3,
@@ -14,8 +14,8 @@
   },
   "reservation_stay_status_sha256": "e98695ff7148e8579b26ed482597c2e06d59d724056a4dcb8b2a23823819ebb8",
   "dataset_revision": "2026-06-15",
-  "load_manifest_row_hash": "439d03fd5e53e75a3024beff4854fec84b62903e12fdae7d626af22197f15dbb",
-  "load_manifest_scraped_at": "2026-06-15 08:17:25.0806+00",
+  "load_manifest_row_hash": "aea16e722cb664db652aafc238066566537dc2f9013d2b51b14dd5d22272e85c",
+  "load_manifest_scraped_at": "2026-06-18 10:10:33.118514+00",
   "aggregates": {
     "posted_stay_rows": 472,
     "posted_reservations": 236,
