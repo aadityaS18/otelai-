@@ -5,7 +5,7 @@ import uuid
 
 import streamlit as st
 from langchain_core.messages import HumanMessage
-from langchain_ollama import ChatOllama
+
 from langchain_groq import ChatGroq
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
@@ -201,12 +201,7 @@ def build_agent():
             model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
             temperature=0,
         )
-    else:
-        llm = ChatOllama(
-            model=os.getenv("OLLAMA_MODEL", "qwen2.5:3b"),
-            temperature=0,
-        )
-
+   
     agent = create_react_agent(
         model=llm,
         tools=config["tools"],
