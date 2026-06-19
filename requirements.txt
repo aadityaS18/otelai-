@@ -5,7 +5,7 @@ pandas==2.2.3
 numpy==2.2.1
 psycopg[binary]==3.2.3
 python-dotenv==1.0.1
-groq==0.13.1
+groq
 langchain-groq
 langchain-core
 langgraph
