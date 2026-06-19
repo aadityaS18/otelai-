@@ -1,10 +1,12 @@
 from pathlib import Path
+import os
 import sys
 import uuid
 
 import streamlit as st
 from langchain_core.messages import HumanMessage
 from langchain_ollama import ChatOllama
+from langchain_groq import ChatGroq
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
@@ -19,6 +21,51 @@ st.set_page_config(
     page_title="Revenue Manager Agent",
     layout="centered",
 )
+
+
+APP_USERNAME = os.getenv("BASIC_AUTH_USERNAME", "admin")
+APP_PASSWORD = os.getenv("BASIC_AUTH_PASSWORD", "otel-demo")
+
+
+def check_basic_login() -> bool:
+    if st.session_state.get("authenticated"):
+        return True
+
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background: #f5f6f8;
+        }
+
+        .block-container {
+            max-width: 460px;
+            padding-top: 5rem;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    with st.form("login"):
+        st.subheader("Revenue Manager Agent")
+        st.caption("Sign in to continue.")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Sign in")
+
+    if submitted:
+        if username == APP_USERNAME and password == APP_PASSWORD:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("Invalid credentials")
+
+    return False
+
+
+if not check_basic_login():
+    st.stop()
 
 
 st.markdown(
@@ -149,10 +196,16 @@ st.markdown(
 def build_agent():
     config = build_agent_config()
 
-    llm = ChatOllama(
-        model="qwen2.5:3b",
-        temperature=0,
-    )
+    if os.getenv("GROQ_API_KEY"):
+        llm = ChatGroq(
+            model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
+            temperature=0,
+        )
+    else:
+        llm = ChatOllama(
+            model=os.getenv("OLLAMA_MODEL", "qwen2.5:3b"),
+            temperature=0,
+        )
 
     agent = create_react_agent(
         model=llm,
@@ -176,9 +229,12 @@ def extract_tool_trace(result: dict) -> list[str]:
 
         msg_type = getattr(msg, "type", "")
         name = getattr(msg, "name", None)
+        content = getattr(msg, "content", "")
 
         if msg_type == "tool":
             trace.append(f"Tool result from: {name}")
+            if content:
+                trace.append(f"Tool output: {content}")
 
     return trace
 
@@ -225,7 +281,7 @@ st.markdown(
     """
     <div class="app-header">
         <h1>Revenue Manager Agent</h1>
-        <p>Ask questions about OTB, segment mix, pickup pace, and block vs transient demand. The agent uses local Ollama plus deterministic revenue tools.</p>
+        <p>Ask questions about OTB, segment mix, pickup pace, and block vs transient demand. The agent uses deterministic revenue tools backed by Postgres.</p>
     </div>
     """,
     unsafe_allow_html=True,
