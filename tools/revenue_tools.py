@@ -14,10 +14,30 @@ DATABASE_URL = os.getenv(
 )
 
 
+
+
+
+def _get_database_url() -> str:
+    database_url = os.getenv("DATABASE_URL")
+
+    if database_url:
+        return database_url
+
+    try:
+        import streamlit as st
+        database_url = st.secrets.get("DATABASE_URL", "")
+        if database_url:
+            return database_url
+    except Exception:
+        pass
+
+    raise RuntimeError(
+        "DATABASE_URL is missing. Add it in Streamlit Cloud secrets."
+    )
+
+
 def _connect():
-    return psycopg.connect(DATABASE_URL)
-
-
+    return psycopg.connect(_get_database_url())
 def _to_float(value):
     if value is None:
         return 0.0
