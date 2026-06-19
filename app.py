@@ -215,13 +215,20 @@ st.markdown(
 @st.cache_resource
 def build_agent():
     groq_api_key = get_secret("GROQ_API_KEY", "")
+    database_url = get_secret("DATABASE_URL", "")
 
     if not groq_api_key:
         raise RuntimeError(
             "Missing GROQ_API_KEY. Add it in Streamlit Cloud secrets."
         )
 
+    if not database_url:
+        raise RuntimeError(
+            "Missing DATABASE_URL. Add it in Streamlit Cloud secrets."
+        )
+
     os.environ["GROQ_API_KEY"] = groq_api_key
+    os.environ["DATABASE_URL"] = database_url
 
     config = build_agent_config()
 
