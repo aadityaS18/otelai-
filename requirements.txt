@@ -9,3 +9,4 @@ groq==0.13.1
 langchain-groq
 langchain-core
 langgraph
+langchain-ollama
