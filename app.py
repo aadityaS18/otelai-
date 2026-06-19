@@ -5,7 +5,6 @@ import uuid
 
 import streamlit as st
 from langchain_core.messages import HumanMessage
-
 from langchain_groq import ChatGroq
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
@@ -14,7 +13,6 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from agent.deep_agent import build_agent_config
-from scripts.langgraph_agent_cli import get_message_content, needs_as_of_approval
 
 
 st.set_page_config(
@@ -23,8 +21,36 @@ st.set_page_config(
 )
 
 
-APP_USERNAME = os.getenv("BASIC_AUTH_USERNAME", "admin")
-APP_PASSWORD = os.getenv("BASIC_AUTH_PASSWORD", "otel-demo")
+def get_secret(name: str, default: str = "") -> str:
+    value = os.getenv(name)
+    if value:
+        return value
+
+    try:
+        return st.secrets.get(name, default)
+    except Exception:
+        return default
+
+
+APP_USERNAME = get_secret("BASIC_AUTH_USERNAME", "admin")
+APP_PASSWORD = get_secret("BASIC_AUTH_PASSWORD", "otel-demo")
+
+
+def get_message_content(message) -> str:
+    content = getattr(message, "content", None)
+
+    if isinstance(content, list):
+        return "\n".join(
+            part.get("text", str(part)) if isinstance(part, dict) else str(part)
+            for part in content
+        )
+
+    return content or str(message)
+
+
+def needs_as_of_approval(question: str) -> bool:
+    q = question.lower()
+    return "as of" in q or "point in time" in q or "point-in-time" in q
 
 
 def check_basic_login() -> bool:
@@ -143,12 +169,6 @@ st.markdown(
         color: #111827;
     }
 
-    .stButton > button:focus {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
-        color: #111827;
-    }
-
     [data-testid="stChatMessage"] {
         background: #ffffff;
         border: 1px solid #e5e7eb;
@@ -194,14 +214,22 @@ st.markdown(
 
 @st.cache_resource
 def build_agent():
+    groq_api_key = get_secret("GROQ_API_KEY", "")
+
+    if not groq_api_key:
+        raise RuntimeError(
+            "Missing GROQ_API_KEY. Add it in Streamlit Cloud secrets."
+        )
+
+    os.environ["GROQ_API_KEY"] = groq_api_key
+
     config = build_agent_config()
 
-    if os.getenv("GROQ_API_KEY"):
-        llm = ChatGroq(
-            model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
-            temperature=0,
-        )
-   
+    llm = ChatGroq(
+        model=get_secret("GROQ_MODEL", "llama-3.1-8b-instant"),
+        temperature=0,
+    )
+
     agent = create_react_agent(
         model=llm,
         tools=config["tools"],
@@ -294,12 +322,13 @@ with st.expander("Try these demo questions", expanded=True):
         "What was July 2026 OTB as of 2026-06-15?",
     ]
 
-    for index, question in enumerate(demo_questions):
+    for index, demo_question in enumerate(demo_questions):
         target_col = col1 if index % 2 == 0 else col2
 
         with target_col:
-            if st.button(question, key=f"demo-{index}", use_container_width=True):
-                st.session_state.next_question = question
+            if st.button(demo_question, key=f"demo-{index}", use_container_width=True):
+                st.session_state.next_question = demo_question
+
 
 if st.button("New conversation"):
     st.session_state.thread_id = f"streamlit-{uuid.uuid4()}"
@@ -318,6 +347,7 @@ for message in st.session_state.messages:
 
 typed_question = st.chat_input("Ask a revenue question...")
 question = st.session_state.pop("next_question", None) or typed_question
+
 
 if question:
     if needs_as_of_approval(question):
@@ -341,25 +371,25 @@ if question:
 
 
 if st.session_state.pending_approval_question:
-    question = st.session_state.pending_approval_question
+    pending_question = st.session_state.pending_approval_question
 
     st.warning("This question uses point-in-time OTB and needs approval before running the tool.")
-    st.markdown(f"**Question:** {question}")
+    st.markdown(f"**Question:** {pending_question}")
 
     approve_col, deny_col = st.columns(2)
 
     with approve_col:
         if st.button("Approve and run", use_container_width=True):
             st.session_state.messages.append(
-                {"role": "user", "content": question, "avatar": "user"}
+                {"role": "user", "content": pending_question, "avatar": "user"}
             )
 
             with st.chat_message("user", avatar="user"):
-                st.markdown(question)
+                st.markdown(pending_question)
 
             with st.chat_message("assistant", avatar="assistant"):
                 with st.spinner("Checking as-of OTB..."):
-                    answer, trace = run_agent(question)
+                    answer, trace = run_agent(pending_question)
                     render_answer_with_trace(answer, trace)
 
             st.session_state.messages.append(
