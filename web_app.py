@@ -1,4 +1,3 @@
-import base64
 import json
 import os
 import secrets
@@ -10,7 +9,7 @@ from typing import Generator
 
 import psycopg
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response, StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from langchain_core.messages import HumanMessage
 from langchain_groq import ChatGroq
@@ -157,7 +156,7 @@ def extract_tool_trace(result: dict) -> list[str]:
 
 
 def sse(event: str, data: str) -> str:
-    safe_data = data.replace("\n", "\\n")
+    safe_data = str(data).replace("\r", "").replace("\n", "\\n")
     return f"event: {event}\ndata: {safe_data}\n\n"
 
 
@@ -172,25 +171,34 @@ def run_agent_stream(question: str, approved: bool, thread_id: str) -> Generator
     yield sse("trace", infer_skill_route(question))
     yield sse("trace", "Running LangGraph agent...")
 
-    agent = get_agent()
+    try:
+        agent = get_agent()
 
-    result = agent.invoke(
-        {"messages": [HumanMessage(content=question)]},
-        config={
-            "configurable": {
-                "thread_id": thread_id,
-            }
-        },
-    )
+        result = agent.invoke(
+            {"messages": [HumanMessage(content=question)]},
+            config={
+                "configurable": {
+                    "thread_id": thread_id,
+                }
+            },
+        )
 
-    trace = extract_tool_trace(result)
+        trace = extract_tool_trace(result)
 
-    for item in trace:
-        yield sse("trace", item)
+        for item in trace:
+            yield sse("trace", item)
 
-    answer = get_message_content(result["messages"][-1])
-    yield sse("answer", answer)
-    yield sse("done", "done")
+        answer = get_message_content(result["messages"][-1])
+        yield sse("answer", answer)
+        yield sse("done", "done")
+
+    except Exception as exc:
+        yield sse("error", f"Agent error: {str(exc)}")
+
+
+@app.get("/favicon.ico")
+def favicon():
+    return Response(status_code=204)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -515,7 +523,7 @@ def index(_: str = Depends(require_auth)):
       }
     }
 
-    const response = await fetch("/chat_stream", {
+    const response = await fetch("/chat_stream/", {
       method: "POST",
       credentials: "include",
       headers: {
@@ -530,6 +538,7 @@ def index(_: str = Depends(require_auth)):
 
     if (!response.ok) {
       answerBox.textContent = "Request failed: " + response.status;
+      traceBox.textContent = "The backend route returned HTTP " + response.status + ". Check Render logs.";
       return;
     }
 
@@ -579,3 +588,63 @@ def index(_: str = Depends(require_auth)):
 </body>
 </html>
     """
+
+
+@app.post("/chat_stream")
+@app.post("/chat_stream/")
+async def chat_stream(request: Request, _: str = Depends(require_auth)):
+    body = await request.json()
+
+    question = body.get("question", "").strip()
+    approved = bool(body.get("approved", False))
+    thread_id = body.get("thread_id") or f"web-{uuid.uuid4()}"
+
+    if not question:
+        return JSONResponse({"error": "Question is required."}, status_code=400)
+
+    return StreamingResponse(
+        run_agent_stream(question, approved, thread_id),
+        media_type="text/event-stream",
+    )
+
+
+@app.get("/health")
+def health(_: str = Depends(require_auth)):
+    proof = load_proof()
+
+    try:
+        with psycopg.connect(get_database_url()) as conn:
+            with conn.cursor() as cur:
+                cur.execute("select count(*) from reservations_hackathon")
+                reservations_hackathon_rows = cur.fetchone()[0]
+
+                cur.execute(
+                    """
+                    select dataset_revision, row_hash
+                    from load_manifest
+                    order by scraped_at desc
+                    limit 1
+                    """
+                )
+                manifest_row = cur.fetchone()
+
+    except Exception as exc:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "error",
+                "error": str(exc),
+            },
+        )
+
+    dataset_revision = manifest_row[0] if manifest_row else proof.get("dataset_revision")
+    row_hash = manifest_row[1] if manifest_row else proof.get("load_manifest_row_hash")
+
+    return {
+        "status": "ok",
+        "db_fingerprint": proof.get("reservation_stay_status_sha256"),
+        "dataset_revision": dataset_revision,
+        "row_hash": row_hash,
+        "financial_status_posted_only_rows": proof.get("aggregates", {}).get("posted_stay_rows"),
+        "reservations_hackathon_rows": reservations_hackathon_rows,
+    }
